@@ -1,28 +1,48 @@
-// ===================== DATOS EN LOCALSTORAGE (SIMULANDO BD) =====================
-// Claves de localStorage
-const LS_PRODUCTOS = "papeleria_productos";
-const LS_VENTAS = "papeleria_ventas";
+// ===================== FIRESTORE FIREBASE (NO MÁS LOCALSTORAGE) =====================
+// db y funciones vienen del script type="module" en index.html
+const db = window.firebaseDb;
+const { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } = window.firebaseFns;
 
-// Funciones helper para leer/escribir localStorage
-function leerProductos() {
-    const data = localStorage.getItem(LS_PRODUCTOS);
-    return data ? JSON.parse(data) : [];
+// Funciones Firestore para productos
+async function leerProductos() {
+    const snapshot = await getDocs(collection(db, "productos"));
+    const productos = [];
+    snapshot.forEach((d) => {
+        productos.push({ id: d.id, ...d.data() });
+    });
+    return productos;
 }
 
-function guardarProductos(lista) {
-    localStorage.setItem(LS_PRODUCTOS, JSON.stringify(lista));
+async function crearProducto(data) {
+    const ref = await addDoc(collection(db, "productos"), data);
+    return ref.id;
 }
 
-function leerVentas() {
-    const data = localStorage.getItem(LS_VENTAS);
-    return data ? JSON.parse(data) : [];
+async function actualizarProducto(id, data) {
+    const ref = doc(db, "productos", id);
+    await updateDoc(ref, data);
 }
 
-function guardarVentas(lista) {
-    localStorage.setItem(LS_VENTAS, JSON.stringify(lista));
+async function eliminarProductoFirestore(id) {
+    const ref = doc(db, "productos", id);
+    await deleteDoc(ref);
 }
 
-// Generar ID sencillo (autoincremental basado en timestamp)
+// Funciones Firestore para ventas
+async function leerVentas() {
+    const snapshot = await getDocs(collection(db, "ventas"));
+    const ventas = [];
+    snapshot.forEach((d) => {
+        ventas.push({ id: d.id, ...d.data() });
+    });
+    return ventas;
+}
+
+async function crearVenta(data) {
+    await addDoc(collection(db, "ventas"), data);
+}
+
+// Generar ID sencillo (Firestore genera su propio ID, pero lo mantenemos para compatibilidad)
 function generarId() {
     return Date.now();
 }
@@ -34,7 +54,7 @@ const appContainer = document.getElementById("app-container");
 const btnLogout = document.getElementById("btn-logout");
 
 // Usuario fijo: admin / 1234
-loginForm.addEventListener("submit", (e) => {
+loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const usuario = document.getElementById("login-usuario").value.trim();
     const password = document.getElementById("login-password").value.trim();
@@ -47,12 +67,12 @@ loginForm.addEventListener("submit", (e) => {
     if (usuario === "admin" && password === "1234") {
         loginContainer.classList.add("hidden");
         appContainer.classList.remove("hidden");
-        // Después de loguear, refrescamos vistas
-        renderProductos();
-        actualizarInventario();
-        poblarSelectProductosVenta();
-        renderVentas();
-        actualizarStats();
+        // Después de loguear, refrescamos vistas desde Firebase
+        await renderProductos();
+        await actualizarInventario();
+        await poblarSelectProductosVenta();
+        await renderVentas();
+        await actualizarStats();
         poblarMasVendidosEjemplo();
     } else {
         alert("Usuario o contraseña incorrectos.");
@@ -72,20 +92,20 @@ const sections = document.querySelectorAll(".section");
 navButtons.forEach((btn) => {
     const target = btn.dataset.section;
     if (!target) return;
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
         sections.forEach((sec) => sec.classList.remove("active"));
         document.getElementById(target).classList.add("active");
 
         // Actualizar datos al entrar a ciertas secciones
         if (target === "sec-productos") {
-            renderProductos();
+            await renderProductos();
         } else if (target === "sec-inventario") {
-            actualizarInventario();
+            await actualizarInventario();
         } else if (target === "sec-ventas") {
-            poblarSelectProductosVenta();
-            renderVentas();
+            await poblarSelectProductosVenta();
+            await renderVentas();
         } else if (target === "sec-estadisticas") {
-            actualizarStats();
+            await actualizarStats();
             poblarMasVendidosEjemplo();
         }
     });
@@ -98,7 +118,7 @@ const btnCancelarEdicion = document.getElementById("btn-cancelar-edicion");
 const inputProductoId = document.getElementById("producto-id");
 
 // Guardar o editar producto
-formProducto.addEventListener("submit", (e) => {
+formProducto.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const nombre = document.getElementById("producto-nombre").value.trim();
@@ -112,43 +132,31 @@ formProducto.addEventListener("submit", (e) => {
         return;
     }
 
-    let productos = leerProductos();
     const idEdicion = inputProductoId.value;
+    const dataProducto = { nombre, categoria, precio, cantidad, fechaRegistro: fecha };
 
-    if (idEdicion) {
-        // Modo edición
-        productos = productos.map((p) =>
-            p.id === Number(idEdicion)
-                ? { ...p, nombre, categoria, precio, cantidad, fechaRegistro: fecha }
-                : p
-        );
-        alert("Producto actualizado correctamente.");
-    } else {
-        // Nuevo producto
-        const nuevo = {
-            id: generarId(),
-            nombre,
-            categoria,
-            precio,
-            cantidad,
-            fechaRegistro: fecha,
-        };
-        productos.push(nuevo);
-        alert("Producto agregado correctamente.");
+    try {
+        if (idEdicion) {
+            // Modo edición
+            await actualizarProducto(idEdicion, dataProducto);
+            alert("Producto actualizado correctamente.");
+        } else {
+            // Nuevo producto
+            await crearProducto(dataProducto);
+            alert("Producto agregado correctamente.");
+        }
+
+        formProducto.reset();
+        inputProductoId.value = "";
+        btnCancelarEdicion.classList.add("hidden");
+        await renderProductos();
+        await actualizarInventario();
+        await poblarSelectProductosVenta();
+        await actualizarStats();
+    } catch (err) {
+        console.error("Error en Firebase:", err);
+        alert("Error al guardar el producto en Firebase. Revisa la consola.");
     }
-
-    guardarProductos(productos);
-    formProducto.reset();
-    inputProductoId.value = "";
-    btnCancelarEdicion.classList.add("hidden");
-    renderProductos();
-    actualizarInventario();
-    poblarSelectProductosVenta();
-    actualizarStats();
-
-    // Aquí podrías hacer un POST/PUT a una API REST en lugar de localStorage.
-    // Ejemplo:
-    // fetch('/api/productos', { method: 'POST', body: JSON.stringify(nuevo), headers: { 'Content-Type': 'application/json' } })
 });
 
 // Cancelar edición
@@ -159,70 +167,80 @@ btnCancelarEdicion.addEventListener("click", () => {
 });
 
 // Renderizar tabla de productos
-function renderProductos() {
-    const productos = leerProductos();
-    tablaProductosBody.innerHTML = "";
+async function renderProductos() {
+    try {
+        const productos = await leerProductos();
+        tablaProductosBody.innerHTML = "";
 
-    productos.forEach((p) => {
-        const tr = document.createElement("tr");
+        productos.forEach((p) => {
+            const tr = document.createElement("tr");
 
-        tr.innerHTML = `
-            <td>${p.id}</td>
-            <td>${p.nombre}</td>
-            <td>${p.categoria}</td>
-            <td>${p.cantidad}</td>
-            <td>${p.precio.toFixed(2)}</td>
-            <td>
-                <button class="btn-secondary btn-small" data-id="${p.id}" data-action="editar">Editar</button>
-                <button class="btn-secondary btn-small" data-id="${p.id}" data-action="eliminar">Eliminar</button>
-            </td>
-        `;
+            tr.innerHTML = `
+                <td>${p.id}</td>
+                <td>${p.nombre}</td>
+                <td>${p.categoria}</td>
+                <td>${p.cantidad}</td>
+                <td>${Number(p.precio).toFixed(2)}</td>
+                <td>
+                    <button class="btn-secondary btn-small" data-id="${p.id}" data-action="editar">Editar</button>
+                    <button class="btn-secondary btn-small" data-id="${p.id}" data-action="eliminar">Eliminar</button>
+                </td>
+            `;
 
-        tablaProductosBody.appendChild(tr);
-    });
+            tablaProductosBody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error("Error al cargar productos:", err);
+        alert("Error al cargar productos desde Firebase.");
+    }
 }
 
 // Delegación de eventos para editar/eliminar
-tablaProductosBody.addEventListener("click", (e) => {
+tablaProductosBody.addEventListener("click", async (e) => {
     const btn = e.target;
     const action = btn.dataset.action;
-    const id = Number(btn.dataset.id);
+    const id = btn.dataset.id;
     if (!action || !id) return;
 
     if (action === "editar") {
-        editarProducto(id);
+        await editarProducto(id);
     } else if (action === "eliminar") {
         eliminarProducto(id);
     }
 });
 
-function editarProducto(id) {
-    const productos = leerProductos();
-    const producto = productos.find((p) => p.id === id);
-    if (!producto) return;
+async function editarProducto(id) {
+    try {
+        const productos = await leerProductos();
+        const producto = productos.find((p) => p.id === id);
+        if (!producto) return;
 
-    inputProductoId.value = producto.id;
-    document.getElementById("producto-nombre").value = producto.nombre;
-    document.getElementById("producto-categoria").value = producto.categoria;
-    document.getElementById("producto-precio").value = producto.precio;
-    document.getElementById("producto-cantidad").value = producto.cantidad;
-    document.getElementById("producto-fecha").value = producto.fechaRegistro || "";
+        inputProductoId.value = producto.id;
+        document.getElementById("producto-nombre").value = producto.nombre;
+        document.getElementById("producto-categoria").value = producto.categoria;
+        document.getElementById("producto-precio").value = producto.precio;
+        document.getElementById("producto-cantidad").value = producto.cantidad;
+        document.getElementById("producto-fecha").value = producto.fechaRegistro || "";
 
-    btnCancelarEdicion.classList.remove("hidden");
+        btnCancelarEdicion.classList.remove("hidden");
+    } catch (err) {
+        console.error("Error al editar producto:", err);
+    }
 }
 
-function eliminarProducto(id) {
+async function eliminarProducto(id) {
     if (!confirm("¿Seguro que deseas eliminar este producto?")) return;
 
-    let productos = leerProductos();
-    productos = productos.filter((p) => p.id !== id);
-    guardarProductos(productos);
-    renderProductos();
-    actualizarInventario();
-    poblarSelectProductosVenta();
-    actualizarStats();
-
-    // Aquí podrías llamar a DELETE /api/productos/:id en tu backend.
+    try {
+        await eliminarProductoFirestore(id);
+        await renderProductos();
+        await actualizarInventario();
+        await poblarSelectProductosVenta();
+        await actualizarStats();
+    } catch (err) {
+        console.error("Error al eliminar producto:", err);
+        alert("Error al eliminar producto en Firebase.");
+    }
 }
 
 // ===================== INVENTARIO =====================
@@ -233,37 +251,41 @@ const btnAplicarFiltros = document.getElementById("btn-aplicar-filtros");
 const btnLimpiarFiltros = document.getElementById("btn-limpiar-filtros");
 const btnActualizarInventario = document.getElementById("btn-actualizar-inventario");
 
-function actualizarInventario() {
-    const productos = leerProductos();
-    const catFiltro = filtroCategoria.value.trim().toLowerCase();
-    const textoFiltro = filtroBusqueda.value.trim().toLowerCase();
+async function actualizarInventario() {
+    try {
+        const productos = await leerProductos();
+        const catFiltro = filtroCategoria.value.trim().toLowerCase();
+        const textoFiltro = filtroBusqueda.value.trim().toLowerCase();
 
-    tablaInventarioBody.innerHTML = "";
+        tablaInventarioBody.innerHTML = "";
 
-    productos
-        .filter((p) => {
-            const coincideCategoria = catFiltro ? p.categoria.toLowerCase().includes(catFiltro) : true;
-            const coincideTexto = textoFiltro ? p.nombre.toLowerCase().includes(textoFiltro) : true;
-            return coincideCategoria && coincideTexto;
-        })
-        .forEach((p) => {
-            const valorTotal = p.cantidad * p.precio;
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${p.nombre}</td>
-                <td>${p.categoria}</td>
-                <td>${p.cantidad}</td>
-                <td>${p.precio.toFixed(2)}</td>
-                <td>${valorTotal.toFixed(2)}</td>
-            `;
-            tablaInventarioBody.appendChild(tr);
-        });
+        productos
+            .filter((p) => {
+                const coincideCategoria = catFiltro ? p.categoria.toLowerCase().includes(catFiltro) : true;
+                const coincideTexto = textoFiltro ? p.nombre.toLowerCase().includes(textoFiltro) : true;
+                return coincideCategoria && coincideTexto;
+            })
+            .forEach((p) => {
+                const valorTotal = p.cantidad * p.precio;
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${p.nombre}</td>
+                    <td>${p.categoria}</td>
+                    <td>${p.cantidad}</td>
+                    <td>${Number(p.precio).toFixed(2)}</td>
+                    <td>${valorTotal.toFixed(2)}</td>
+                `;
+                tablaInventarioBody.appendChild(tr);
+            });
+    } catch (err) {
+        console.error("Error al actualizar inventario:", err);
+    }
 }
 
-// Botón "Actualizar inventario" (simula recarga desde BD)
-btnActualizarInventario.addEventListener("click", () => {
-    actualizarInventario();
-    alert("Inventario actualizado desde la base de datos (simulado).");
+// Botón "Actualizar inventario" (recarga desde Firebase)
+btnActualizarInventario.addEventListener("click", async () => {
+    await actualizarInventario();
+    alert("Inventario actualizado desde Firebase Firestore.");
 });
 
 btnAplicarFiltros.addEventListener("click", () => {
@@ -285,16 +307,20 @@ const inputVentaFecha = document.getElementById("venta-fecha");
 const tablaVentasBody = document.getElementById("tabla-ventas-body");
 
 // Llenar select de productos
-function poblarSelectProductosVenta() {
-    const productos = leerProductos();
-    selectVentaProducto.innerHTML = '<option value="">Selecciona un producto</option>';
-    productos.forEach((p) => {
-        const option = document.createElement("option");
-        option.value = p.id;
-        option.textContent = p.nombre;
-        option.dataset.precio = p.precio;
-        selectVentaProducto.appendChild(option);
-    });
+async function poblarSelectProductosVenta() {
+    try {
+        const productos = await leerProductos();
+        selectVentaProducto.innerHTML = '<option value="">Selecciona un producto</option>';
+        productos.forEach((p) => {
+            const option = document.createElement("option");
+            option.value = p.id;
+            option.textContent = p.nombre;
+            option.dataset.precio = p.precio;
+            selectVentaProducto.appendChild(option);
+        });
+    } catch (err) {
+        console.error("Error al poblar productos:", err);
+    }
 }
 
 // Al cambiar de producto, actualizar precio unitario
@@ -305,10 +331,10 @@ selectVentaProducto.addEventListener("change", () => {
 });
 
 // Registrar venta
-formVenta.addEventListener("submit", (e) => {
+formVenta.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const idProducto = Number(selectVentaProducto.value);
+    const idProducto = selectVentaProducto.value;
     const cantidad = parseInt(inputVentaCantidad.value, 10);
     const precioUnitario = parseFloat(inputVentaPrecio.value);
     const fecha = inputVentaFecha.value || new Date().toISOString().slice(0, 10);
@@ -318,68 +344,71 @@ formVenta.addEventListener("submit", (e) => {
         return;
     }
 
-    let productos = leerProductos();
-    const producto = productos.find((p) => p.id === idProducto);
-    if (!producto) {
-        alert("Producto no encontrado.");
-        return;
+    try {
+        const productos = await leerProductos();
+        const producto = productos.find((p) => p.id === idProducto);
+        if (!producto) {
+            alert("Producto no encontrado.");
+            return;
+        }
+
+        if (producto.cantidad < cantidad) {
+            alert("No hay suficiente inventario para esta venta.");
+            return;
+        }
+
+        // Actualizar cantidad en producto
+        await actualizarProducto(idProducto, {
+            ...producto,
+            cantidad: producto.cantidad - cantidad
+        });
+
+        const total = cantidad * precioUnitario;
+
+        // Registrar venta
+        await crearVenta({
+            idProducto,
+            nombreProducto: producto.nombre,
+            cantidad,
+            precioUnitario,
+            total,
+            fecha
+        });
+
+        alert("Venta registrada correctamente.");
+        formVenta.reset();
+        await poblarSelectProductosVenta();
+        await renderVentas();
+        await actualizarInventario();
+        await actualizarStats();
+    } catch (err) {
+        console.error("Error al registrar venta:", err);
+        alert("Error al registrar la venta en Firebase.");
     }
-
-    if (producto.cantidad < cantidad) {
-        alert("No hay suficiente inventario para esta venta.");
-        return;
-    }
-
-    // Actualizar inventario
-    producto.cantidad -= cantidad;
-    productos = productos.map((p) => (p.id === producto.id ? producto : p));
-    guardarProductos(productos);
-
-    // Registrar venta
-    const total = cantidad * precioUnitario;
-    let ventas = leerVentas();
-    const nuevaVenta = {
-        id: generarId(),
-        idProducto,
-        nombreProducto: producto.nombre,
-        cantidad,
-        precioUnitario,
-        total,
-        fecha,
-    };
-    ventas.push(nuevaVenta);
-    guardarVentas(ventas);
-
-    alert("Venta registrada correctamente.");
-    formVenta.reset();
-    poblarSelectProductosVenta();
-    renderVentas();
-    actualizarInventario();
-    actualizarStats();
-
-    // Aquí se integraría con la tabla 'ventas' real en una base de datos.
-    // Ejemplo:
-    // fetch('/api/ventas', { method: 'POST', body: JSON.stringify(nuevaVenta), headers: { 'Content-Type': 'application/json' } })
 });
 
 // Renderizar tabla de ventas
-function renderVentas() {
-    const ventas = leerVentas();
-    tablaVentasBody.innerHTML = "";
+async function renderVentas() {
+    try {
+        const ventas = await leerVentas();
+        tablaVentasBody.innerHTML = "";
 
-    ventas
-        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
-        .forEach((v) => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${v.fecha}</td>
-                <td>${v.nombreProducto}</td>
-                <td>${v.cantidad}</td>
-                <td>${v.precioUnitario.toFixed(2)}</td>
-                <td>${v.total.toFixed(2)}</td>
-            `;
-            tablaVentasBody.appendChild(tr);
-        });
+        ventas
+            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+            .forEach((v) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${v.fecha}</td>
+                    <td>${v.nombreProducto}</td>
+                    <td>${v.cantidad}</td>
+                    <td>${Number(v.precioUnitario).toFixed(2)}</td>
+                    <td>${Number(v.total).toFixed(2)}</td>
+                `;
+                tablaVentasBody.appendChild(tr);
+            });
+    } catch (err) {
+        console.error("Error al cargar ventas:", err);
+    }
 }
 
 // ===================== ESTADÍSTICAS =====================
@@ -402,26 +431,28 @@ statRango.addEventListener("change", () => {
 });
 
 // Calcular estadísticas básicas
-function actualizarStats() {
-    const productos = leerProductos();
-    const ventas = leerVentas();
+async function actualizarStats() {
+    try {
+        const productos = await leerProductos();
+        const ventas = await leerVentas();
 
-    // Total de productos registrados
-    statTotalProductos.textContent = productos.length;
+        // Total de productos registrados
+        statTotalProductos.textContent = productos.length;
 
-    // Valor total del inventario
-    const valorTotal = productos.reduce((acc, p) => acc + p.cantidad * p.precio, 0);
-    statValorInventario.textContent = valorTotal.toFixed(2);
+        // Valor total del inventario
+        const valorTotal = productos.reduce((acc, p) => acc + p.cantidad * p.precio, 0);
+        statValorInventario.textContent = valorTotal.toFixed(2);
 
-    // Aquí podrías filtrar ventas por rango de fechas para estadísticas más avanzadas
-    // según statRango.value, inputStatDesde.value y inputStatHasta.value.
+        // Aquí podrías filtrar ventas por rango de fechas para estadísticas más avanzadas
+        // según statRango.value, inputStatDesde.value y inputStatHasta.value.
+    } catch (err) {
+        console.error("Error al calcular estadísticas:", err);
+    }
 }
 
-btnActualizarStats.addEventListener("click", () => {
-    // Por ahora solo recalcula usando todos los datos.
-    // Cuando tengas la lógica de ventas por rango, aplícala aquí.
-    actualizarStats();
-    alert("Estadísticas actualizadas (rango simulado).");
+btnActualizarStats.addEventListener("click", async () => {
+    await actualizarStats();
+    alert("Estadísticas actualizadas desde Firebase (rango simulado).");
 });
 
 // Datos de ejemplo para "productos más vendidos"

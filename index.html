@@ -265,6 +265,47 @@
             </section>
         </main>
     </div>
+    
+    <!-- SDKs de Firebase (modular) -->
+    <script type="module">
+    // Importar SDKs desde la CDN
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
+    import {
+    getFirestore,
+    collection,
+    getDocs,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    doc
+  } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+  // Configuración de tu proyecto (la que ya tienes)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDjpXl9Iy3va8Jt_g7XN4sYlJprZBr1hME",
+    authDomain: "inventario-papeleria-rp.firebaseapp.com",
+    projectId: "inventario-papeleria-rp",
+    storageBucket: "inventario-papeleria-rp.firebasestorage.app",
+    messagingSenderId: "73420961437",
+    appId: "1:73420961437:web:6731c65237487b8d27c674",
+    measurementId: "G-KPCH55K3F5"
+  };
+
+  // Inicializar Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+
+  // Inicializar Firestore
+  const db = getFirestore(app);
+
+  // Exponer Firestore y funciones en window para usarlas en app.js
+  window.firebaseDb = db;
+  window.firebaseFns = { collection, getDocs, addDoc, updateDoc, deleteDoc, doc };
+</script>
+
+    <!-- Tu lógica principal -->
+
 
     <script src="js/app.js"></script>
 </body>

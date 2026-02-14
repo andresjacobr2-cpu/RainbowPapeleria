@@ -266,47 +266,50 @@
         </main>
     </div>
     
-    <!-- SDKs de Firebase (modular) -->
     <script type="module">
-    // Importar SDKs desde la CDN
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
-    import {
-    getFirestore,
-    collection,
-    getDocs,
-    addDoc,
-    updateDoc,
-    deleteDoc,
-    doc
-  } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+        // Importar TODOS los SDKs necesarios de Firebase v12.9.0
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
+        import { 
+            getFirestore, 
+            collection, 
+            getDocs, 
+            addDoc, 
+            updateDoc, 
+            deleteDoc, 
+            doc 
+        } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 
-  // Configuración de tu proyecto (la que ya tienes)
-  const firebaseConfig = {
-    apiKey: "AIzaSyDjpXl9Iy3va8Jt_g7XN4sYlJprZBr1hME",
-    authDomain: "inventario-papeleria-rp.firebaseapp.com",
-    projectId: "inventario-papeleria-rp",
-    storageBucket: "inventario-papeleria-rp.firebasestorage.app",
-    messagingSenderId: "73420961437",
-    appId: "1:73420961437:web:6731c65237487b8d27c674",
-    measurementId: "G-KPCH55K3F5"
-  };
+        // TU configuración (ya la tienes perfecta)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDjpXl9Iy3va8Jt_g7XN4sYlJprZBr1hME",
+            authDomain: "inventario-papeleria-rp.firebaseapp.com",
+            projectId: "inventario-papeleria-rp",
+            storageBucket: "inventario-papeleria-rp.firebasestorage.app",
+            messagingSenderId: "73420961437",
+            appId: "1:73420961437:web:6731c65237487b8d27c674",
+            measurementId: "G-KPCH55K3F5"
+        };
 
-  // Inicializar Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
 
-  // Inicializar Firestore
-  const db = getFirestore(app);
+        // ✅ IMPORTANTE: Exponer para app.js
+        window.firebaseDb = db;
+        window.firebaseFns = { 
+            collection, 
+            getDocs, 
+            addDoc, 
+            updateDoc, 
+            deleteDoc, 
+            doc 
+        };
 
-  // Exponer Firestore y funciones en window para usarlas en app.js
-  window.firebaseDb = db;
-  window.firebaseFns = { collection, getDocs, addDoc, updateDoc, deleteDoc, doc };
-</script>
-
-    <!-- Tu lógica principal -->
-
-
+        console.log("✅ Firebase inicializado:", db); // Para verificar
+    </script>
+    
     <script src="js/app.js"></script>
 </body>
 </html>

@@ -1,0 +1,279 @@
+/* ========== RESET BÁSICO ========== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+/* ========== UTILIDADES ========== */
+.hidden {
+    display: none !important;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.btn-primary,
+.btn-secondary {
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background-color: #2563eb;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1d4ed8;
+}
+
+.btn-secondary {
+    background-color: #e5e7eb;
+    color: #111827;
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+
+.form-group {
+    margin-bottom: 0.8rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
+    font-size: 0.9rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.form-row .form-group {
+    flex: 1;
+    min-width: 180px;
+}
+
+/* ========== LOGIN ========== */
+#login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.login-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.1);
+    max-width: 360px;
+    width: 100%;
+}
+
+.login-box h1 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.login-hint {
+    margin-top: 0.8rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+    text-align: center;
+}
+
+/* ========== LAYOUT PRINCIPAL ========== */
+#app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    background-color: #111827;
+    color: white;
+    padding: 1.5rem 1rem;
+}
+
+.sidebar h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.sidebar nav ul {
+    list-style: none;
+}
+
+.sidebar nav li {
+    margin-bottom: 0.5rem;
+}
+
+.nav-btn {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: white;
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.nav-btn:hover {
+    background-color: #1f2937;
+}
+
+.nav-logout {
+    margin-top: 1rem;
+    background-color: #b91c1c;
+}
+
+.nav-logout:hover {
+    background-color: #991b1b;
+}
+
+/* Contenido */
+.main-content {
+    flex: 1;
+    padding: 1.5rem;
+}
+
+/* Secciones */
+.section {
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+.section h1 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+}
+
+/* Tarjetas */
+.card {
+    background: white;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(15, 23, 42, 0.05);
+}
+
+.card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Tablas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+thead {
+    background-color: #f9fafb;
+}
+
+th,
+td {
+    padding: 0.6rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+    font-weight: 600;
+    color: #4b5563;
+}
+
+/* Filtros */
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+
+/* Estadísticas */
+.stats-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.stat-item {
+    background-color: #f9fafb;
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.4rem;
+}
+
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    #app-container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sidebar nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .nav-btn {
+        width: auto;
+    }
+}

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema de Inventario - Papelería</title>
+    <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+    <!-- ================= LOGIN ================= -->
+    <div id="login-container">
+        <div class="login-box">
+            <h1>Inventario Papelería</h1>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-usuario">Usuario</label>
+                    <input type="text" id="login-usuario" placeholder="Ingresa usuario" />
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Contraseña</label>
+                    <input type="password" id="login-password" placeholder="Ingresa contraseña" />
+                </div>
+                <button type="submit" class="btn-primary">Ingresar</button>
+                <p class="login-hint">Usuario: <strong>admin</strong> | Contraseña: <strong>1234</strong></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- =============== PANEL PRINCIPAL =============== -->
+    <div id="app-container" class="hidden">
+        <!-- Menú lateral -->
+        <aside class="sidebar">
+            <h2>Papelería</h2>
+            <nav>
+                <ul>
+                    <li><button class="nav-btn" data-section="sec-productos">Productos</button></li>
+                    <li><button class="nav-btn" data-section="sec-inventario">Inventario</button></li>
+                    <li><button class="nav-btn" data-section="sec-ventas">Ventas</button></li>
+                    <li><button class="nav-btn" data-section="sec-estadisticas">Estadísticas</button></li>
+                    <li><button id="btn-logout" class="nav-btn nav-logout">Cerrar sesión</button></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+            <!-- Sección Productos -->
+            <section id="sec-productos" class="section active">
+                <h1>Gestión de productos</h1>
+                <div class="card">
+                    <h2>Registrar / Editar producto</h2>
+                    <form id="form-producto">
+                        <!-- ID oculto para edición -->
+                        <input type="hidden" id="producto-id" />
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="producto-nombre">Nombre del producto</label>
+                                <input type="text" id="producto-nombre" placeholder="Cuaderno cuadriculado, lápiz HB, etc." required />
+                            </div>
+                            <div class="form-group">
+                                <label for="producto-categoria">Categoría</label>
+                                <input type="text" id="producto-categoria" placeholder="Cuadernos, Útiles, Arte, Oficina..." required />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="producto-precio">Precio de venta (COP)</label>
+                                <input type="number" step="0.01" id="producto-precio" min="0" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="producto-cantidad">Cantidad inicial</label>
+                                <input type="number" id="producto-cantidad" min="0" required />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="producto-fecha">Fecha de registro</label>
+                                <input type="date" id="producto-fecha" />
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary" id="btn-guardar-producto">Guardar producto</button>
+                        <button type="button" class="btn-secondary hidden" id="btn-cancelar-edicion">Cancelar edición</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>Lista de productos</h2>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-productos-body">
+                                <!-- Filas generadas por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Inventario -->
+            <section id="sec-inventario" class="section">
+                <h1>Inventario actual</h1>
+
+                <div class="card">
+                    <div class="filters">
+                        <div class="form-group">
+                            <label for="filtro-categoria">Filtrar por categoría</label>
+                            <input type="text" id="filtro-categoria" placeholder="Ej. Cuadernos" />
+                        </div>
+                        <div class="form-group">
+                            <label for="filtro-busqueda">Buscar por nombre</label>
+                            <input type="text" id="filtro-busqueda" placeholder="Buscar producto..." />
+                        </div>
+                        <button id="btn-aplicar-filtros" class="btn-secondary">Aplicar filtros</button>
+                        <button id="btn-limpiar-filtros" class="btn-secondary">Limpiar</button>
+                        <button id="btn-actualizar-inventario" class="btn-primary">Actualizar inventario</button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio (COP)</th>
+                                    <th>Valor total (COP)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-inventario-body">
+                                <!-- Filas generadas por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Ventas -->
+            <section id="sec-ventas" class="section">
+                <h1>Registro de ventas</h1>
+
+                <div class="card">
+                    <h2>Nueva venta</h2>
+                    <form id="form-venta">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="venta-producto">Producto</label>
+                                <select id="venta-producto" required>
+                                    <option value="">Selecciona un producto</option>
+                                    <!-- Opciones generadas por JS -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="venta-cantidad">Cantidad</label>
+                                <input type="number" id="venta-cantidad" min="1" required />
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="venta-precio">Precio unitario (COP)</label>
+                                <input type="number" step="0.01" id="venta-precio" min="0" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="venta-fecha">Fecha de venta</label>
+                                <input type="date" id="venta-fecha" />
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Registrar venta</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>Ventas recientes</h2>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio unitario</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-ventas-body">
+                                <!-- Filas generadas por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Estadísticas -->
+            <section id="sec-estadisticas" class="section">
+                <h1>Estadísticas</h1>
+
+                <div class="card">
+                    <h2>Resumen general</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Total de productos registrados</span>
+                            <span class="stat-value" id="stat-total-productos">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Valor total del inventario (COP)</span>
+                            <span class="stat-value" id="stat-valor-inventario">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Rango de tiempo</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="stat-rango">Rango</label>
+                            <select id="stat-rango">
+                                <option value="ultimo-mes">Último mes</option>
+                                <option value="ultima-semana">Última semana</option>
+                                <option value="personalizado">Personalizado</option>
+                            </select>
+                        </div>
+                        <div class="form-group rango-personalizado hidden" id="rango-personalizado-fechas">
+                            <label>Desde</label>
+                            <input type="date" id="stat-desde" />
+                            <label>Hasta</label>
+                            <input type="date" id="stat-hasta" />
+                        </div>
+                        <button id="btn-actualizar-stats" class="btn-primary">Actualizar estadísticas</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Productos más vendidos (datos de ejemplo)</h2>
+                    <!-- Aquí simulamos datos de ejemplo.
+                         Cuando tengas el backend de ventas real, reemplaza esta tabla
+                         por una consulta a la base de datos. -->
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Unidades vendidas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-mas-vendidos">
+                                <!-- Filas de ejemplo generadas por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
